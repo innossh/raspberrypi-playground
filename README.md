@@ -58,10 +58,42 @@ $ ansible-playbook pi-nodejs.yml
 
 ----
 
-If you want to run the ansible playbook to real Raspberry Pi, modify `ssh_config` and `hosts.ini`.
+If you want to run the ansible playbook to the physical Raspberry Pi, modify `ssh_config` and `hosts.ini` as below.
 
 ```diff
+--- a/hosts.ini
++++ b/hosts.ini
+@@ -1,2 +1,3 @@
+ [pi]
+ qemu-pi
++real-pi
 ```
 
 ```diff
+--- a/ssh_config
++++ b/ssh_config
+@@ -9,6 +9,17 @@ Host qemu-pi
+   IdentitiesOnly yes
+   LogLevel FATAL
+
++Host real-pi
++  HostName raspberrypi.local
++  User pi
++  Port 22
++  UserKnownHostsFile /dev/null
++  StrictHostKeyChecking no
++  PasswordAuthentication no
++  IdentityFile ./pi_id_rsa
++  IdentitiesOnly yes
++  LogLevel FATAL
++
+ Host *
+   ControlMaster auto
+   ControlPath ~/.ansible/cp/%h-%p-%r
+```
+
+Then run some playbook to the physical machine.
+
+```console
+$ ansible-playbook pi-nodejs.yml -l real-pi
 ```
