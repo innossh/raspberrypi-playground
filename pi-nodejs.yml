@@ -1,0 +1,39 @@
+---
+- hosts: pi
+  gather_facts: no
+  become: yes
+
+  tasks:
+    # Failed to install Node.js on ARMv6 hardware
+    # - include: includes/pi-nodejs-deprecated.yml
+
+    - block:
+      - name: Update package lists
+        apt:
+          update_cache: yes
+
+      - name: Install npm
+        apt:
+          name: npm
+          state: present
+
+      - name: Install n
+        npm:
+          name: n
+          state: present
+          global: yes
+
+      - name: Install nodejs
+        command: n lts
+
+      - name: Confirm nodejs version
+        command: node -v
+        changed_when: false
+        register: installed_node_version
+
+      - name: Print nodejs version
+        debug:
+          var: installed_node_version.stdout
+
+      tags:
+        - nodejs

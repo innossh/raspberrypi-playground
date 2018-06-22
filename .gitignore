@@ -1,0 +1,9 @@
+*id_rsa
+*id_rsa.pub
+
+*.img
+*.dtb
+*.zip
+kernel-qemu-*
+
+tmp/

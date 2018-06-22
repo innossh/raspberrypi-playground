@@ -1,0 +1,41 @@
+---
+- block:
+  # https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions
+  # - name: install nodejs repo
+  #   shell: curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+  #
+  # ## You appear to be running on ARMv6 hardware. Unfortunately this is not currently supported by the NodeSource Linux distributions. Please use the 'linux-armv6l' binary tarballs available directly from nodejs.org for Node.js 4 and later.
+  # https://github.com/nodesource/distributions#manual-installation
+
+  - name: Add the NodeSource package signing key
+    apt_key:
+      url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+      state: present
+
+  - name: Add the desired NodeSource repository
+    apt_repository:
+      repo: "{{ item }}"
+      state: present
+      filename: nodesource
+      update_cache: no
+    with_items:
+      - "deb https://deb.nodesource.com/{{ pi_nodesource_version }} {{ pi_distro }} main"
+      - "deb-src https://deb.nodesource.com/{{ pi_nodesource_version }} {{ pi_distro }} main"
+    register: result
+    vars:
+      - pi_distro: "{{ ansible_distribution_release }}"
+      - pi_nodesource_version: node_8.x
+
+  - name: Update package lists
+    apt:
+      update_cache: yes
+    when: result.changed
+
+  - name: Install Node.js
+    apt:
+      name: nodejs
+      state: latest
+
+  become: yes
+  tags:
+    - nodejs

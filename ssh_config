@@ -1,0 +1,15 @@
+Host qemu-pi
+  HostName 127.0.0.1
+  User pi
+  Port 10022
+  UserKnownHostsFile /dev/null
+  StrictHostKeyChecking no
+  PasswordAuthentication no
+  IdentityFile ./pi_id_rsa
+  IdentitiesOnly yes
+  LogLevel FATAL
+
+Host *
+  ControlMaster auto
+  ControlPath ~/.ansible/cp/%h-%p-%r
+  ControlPersist 180s

@@ -1,0 +1,36 @@
+---
+- hosts: pi
+  gather_facts: no
+  become: yes
+
+  tasks:
+    - block:
+      - name: Add the Chromium beta package signing key
+        apt_key:
+          keyserver: keyserver.ubuntu.com
+          id: EA6E302DC78CC4B087CFC3570EBEA9B02842F111
+          state: present
+
+      - name: Add the Chromium beta repository
+        apt_repository:
+          repo: "{{ item }}"
+          state: present
+          filename: chromium-team
+          update_cache: no
+        with_items:
+          - "deb http://ppa.launchpad.net/chromium-team/beta/ubuntu trusty main"
+          - "deb-src http://ppa.launchpad.net/chromium-team/beta/ubuntu trusty main"
+        register: result
+
+      - name: Update package lists
+        apt:
+          update_cache: yes
+        when: result.changed
+
+      - name: Install chromium-browser
+        apt:
+          name: chromium-browser
+          state: latest
+
+      tags:
+        - puppeteer

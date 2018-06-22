@@ -1,0 +1,54 @@
+---
+- hosts: pi
+  gather_facts: no
+  become: yes
+
+  vars:
+    target_device: /dev/sda
+    target_partition_number: 2
+    acceptable_diff: 1
+
+  tasks:
+    - block:
+      - name: Read device information (GiB)
+        parted:
+          device: "{{ target_device }}"
+          unit: GiB
+        register: device_info_gib
+
+      - name: Check whether recreating partition is necessary or not
+        set_fact:
+          recreating_partition: "{{ device_info_gib.disk.size - device_info_gib.partitions[target_partition_number - 1].size > acceptable_diff | bool }}"
+
+      tags:
+        - partition
+
+    - block:
+      - name: Read device information
+        parted:
+          device: "{{ target_device }}"
+          unit: s
+        register: device_info
+
+      - name: Remove the partition
+        parted:
+          device: "{{ target_device }}"
+          number: "{{ target_partition_number }}"
+          state: absent
+
+      - name: Create the new partition
+        parted:
+          device: "{{ target_device }}"
+          number: "{{ target_partition_number }}"
+          state: present
+          part_start: "{{ device_info.partitions[target_partition_number - 1].begin }}s"
+
+      - name: Resize the filesystem
+        filesystem:
+          fstype: ext4
+          dev: "{{ target_device }}{{ target_partition_number }}"
+          resizefs: yes
+
+      when: recreating_partition
+      tags:
+        - partition
