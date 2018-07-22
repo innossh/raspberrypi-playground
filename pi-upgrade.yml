@@ -1,0 +1,61 @@
+---
+- hosts: pi
+  gather_facts: yes
+  become: yes
+
+  tasks:
+    - block:
+      - name: Validate OS
+        fail:
+          msg: Only jessie is supported
+        when: ansible_distribution_release != "jessie"
+
+      - name: Replace jessie with stretch in apt repositories
+        apt_repository:
+          repo: "{{ item.repo }}"
+          state: "{{ item.state | default('present') }}"
+          filename: /etc/apt/sources
+          update_cache: no
+        with_items:
+          - { repo: "deb http://mirrordirector.raspbian.org/raspbian/ jessie main contrib non-free rpi", state: absent }
+          - { repo: "deb http://mirrordirector.raspbian.org/raspbian/ stretch main contrib non-free rpi" }
+        register: result1
+
+      - name: Replace jessie with stretch in apt repositories
+        apt_repository:
+          repo: "{{ item.repo }}"
+          state: "{{ item.state | default('present') }}"
+          filename: raspi
+          update_cache: no
+        with_items:
+          - { repo: "deb http://archive.raspberrypi.org/debian/ jessie main ui", state: absent }
+          - { repo: "deb http://archive.raspberrypi.org/debian/ stretch main ui" }
+        register: result2
+
+      - name: Update package lists
+        apt:
+          update_cache: yes
+        when: result1.changed or result2.changed
+
+      - name: Simulate to upgrade
+        apt:
+          upgrade: "{{ item }}"
+        check_mode: yes
+        with_items:
+          - "yes"
+          - "dist"
+
+      # NOTE: Not sure this works well
+      # - name: Upgrade
+      #   apt:
+      #     upgrade: "{{ item }}"
+      #   with_items:
+      #     - "yes"
+      #     - "dist"
+      #   when: not ansible_check_mode
+
+      # - debug:
+      #     msg: Please reboot the raspberry pi
+
+      tags:
+        - upgrade
